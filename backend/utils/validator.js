@@ -11,6 +11,7 @@ function validateSensorData(data) {
   if (!isNumber(data.ldr)) return false;
   if (!isNumber(data.current)) return false;
   if (!isNumber(data.power)) return false;
+  if (!isNumber(data.energy_kWh)) return false;
   return true;
 }
 

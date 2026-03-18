@@ -10,6 +10,7 @@ async function saveSensorData(data) {
     ldr: data.ldr,
     current: data.current,
     power: data.power,
+    energy_kWh: data.energy_kWh,
     deviceTimestamp: data.timestamp ?? null,
     createdAt: admin.firestore.FieldValue.serverTimestamp()
   };

@@ -3,6 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const sensorRoutes = require("./routes/sensorRoutes");
 const { startMqttClient } = require("./mqttClient");
+const { db } = require("./firebase");
 
 dotenv.config();
 
@@ -17,10 +18,24 @@ app.get("/", (req, res) => {
 
 app.use("/api/sensors", sensorRoutes);
 
-startMqttClient();
+async function startServer() {
+  try {
+    console.log("Testing Firebase connection...");
+    await db.collection("test").add({
+      message: "Firebase connected",
+      createdAt: new Date()
+    });
+    console.log("Firebase connected successfully");
+  } catch (error) {
+    console.log("Firebase connection error:", error.message);
+  }
 
-const PORT = process.env.PORT || 5000;
+  startMqttClient();
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+startServer();

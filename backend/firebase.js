@@ -1,8 +1,11 @@
 const admin = require("firebase-admin");
-const serviceAccount = require("./firebaseKey.json");
+const path = require("path");
+
+const serviceAccount = require(path.join(__dirname, "firebaseKey.json"));
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
+  projectId: serviceAccount.project_id
 });
 
 const db = admin.firestore();
