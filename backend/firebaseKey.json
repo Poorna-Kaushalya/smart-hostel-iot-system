@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "smart-hostel-iot",
+  "private_key_id": "afb8eb02fe3c4042a7695f18cf02b92cd793f8d5",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCld/+LkMF/I6t2\n/Ib2KLqTv9Lw8zv7lJV4FQRyK3J46pYlZ/gkkXvIKCQEsSyq7UPct/nIqPdRK3bR\niDAE8MZZUSaF4vV6WhTl/hElsqsObu7XI08TcYuyEJ0aMV6dVheF7McCpfKEPwF1\njNNcOAbMToEY/G8kSRGL+okJYFieH1ZftTgU0AduuzFAUZRuNQFzigRUC4plH7Xu\nlgWWWDjrAAfHzwIPFvpFRMDmYgl2GBIHgIpYOJuMY91RG0v8D2BXm04yhLfoY3J7\nJDEpoNiXopHWQ+h/nSENbcR2try7iz5aVy8bbzmS/SxRMtCprz47a6xVgpR58sAK\nbXdk5iRDAgMBAAECggEAGWCYiYv3aSuMJLu2aogKPsETiyRletWpwNjJrZrlO7nl\nXNz1DTgKJG387C1Mx6A2TA0j8CGd4KM1CLiwKKnRZH8SKe7fgtbQUApnEIGLmN3s\nSoQzS1ea5ayE87CbrVoNUdsOazpj7I1fM2tC5T4Afj1nW5t844iYpNUVRvdcT/pe\nRAGhiVcEdCI0QrEGZWz/xWjyMRhRX9aC09G4gKH9/rcHGK7m0DESaChXS9TQGzIP\nu7l82CnHOeVOUojyg3IpKPVsxTDIeoz7uM6nib3PiuYAk37NZ/zwePuObsY46obq\n0S2541RCKCyHjf9ssJPCXYJ33ERe8LL1u2BMzkjzxQKBgQDQkltMdMJ1kh+abPGG\nqlllia1AtvAy2Tim3qTLL0HlND0r4TC/IoXEHRShOdwujLVzrdhGY0cCFrwB5Joy\nXmyMNYVJ6mKyxO7LAQYO7ULd5XOPix8W0uLWOP30haSUvQzTV8NfqO4QsnlaN5id\nladsJ6Z6PpYsJbGAdvCgLJDqvwKBgQDLGHoJXbUVuifwM5I345DmxW9oTt9H8Cd2\nlGInCnzzF/lfhuuQ9OG7P0hdEYUl1siqJew4ltjd8XEXfVmQzclKFrQA6Z8930hl\n31mgWOsQyjaPtbHwyGRHJ9uTnv2tkVfv8lXKO6s4De5c8FRJ+baS5JEFJG3iyARh\nvl6KNda7fQKBgBFCOxnNg5XU/JZ7s1SwXetgBB0ZxjB+9wgf3kUN6Qb9Vp596Nm4\nEpeSzHU243hanl0vInlYl7SdivshHn1SgOrtNtVR9s7SKuxTblvn2COia/iRy4XI\n94pAdws3z9Ga/yex2HHe+awaCJ6lgRRxIMR7V3RAH48Ro2l87hZi+a7jAoGAIkr9\nwDscapDGUZ7Dn8BDJVRNHXXD6ee5IiKn+COjOYDg0Kp9eDqBKxbiZySgMOV1eJVy\nr5N5BvDPwcGer/6vcF0pA8Zu5wmeteTiw1qARpN+ZwGtDBUqKYGnZ+O+veH+0TtA\nFSfCH3LqvrKt6NfLZj5F5nJiQ5q2crKsT/YLThkCgYEAl/fzq9l6m9YjioQQML7T\nOKq6H8UdvsXqYtjU6Bi+lQLBFXou6GNZOPKeCJ4NayCWfA7aauLGfBXE7BqXOFhR\n1Hdrg7fq0YSblsYKBx9yDAuje2r9f1ALTx5gyV4AYnw0XLA8AkWP9escrS2QwvcO\n5Th58JtEuM9ofKfCNjIyvuw=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@smart-hostel-iot.iam.gserviceaccount.com",
+  "client_id": "102198237680887267427",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40smart-hostel-iot.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
