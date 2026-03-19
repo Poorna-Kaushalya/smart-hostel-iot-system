@@ -15,32 +15,16 @@ function startMqttClient() {
 
   client.on("message", async (topic, message) => {
     try {
-      const raw = message.toString();
-      console.log("Incoming topic:", topic);
-      console.log("Incoming raw message:", raw);
-
-      const payload = JSON.parse(raw);
-      console.log("Parsed payload:", payload);
-
-      const isValid = validateSensorData(payload);
-      console.log("Validation result:", isValid);
-
-      if (!isValid) {
-        console.log("Invalid sensor data:", payload);
-        return;
-      }
-
+      const payload = JSON.parse(message.toString());
+      if (!validateSensorData(payload)) return console.log("Invalid sensor data", payload);
       const saved = await saveSensorData(payload);
-      console.log("Saved document:", saved.id);
+      console.log("Saved sensor doc:", saved.id);
     } catch (error) {
       console.log("MQTT message error:", error.message);
     }
   });
 
-  client.on("error", (error) => {
-    console.log("MQTT connection error:", error.message);
-  });
-
+  client.on("error", error => console.log("MQTT error:", error.message));
   return client;
 }
 
