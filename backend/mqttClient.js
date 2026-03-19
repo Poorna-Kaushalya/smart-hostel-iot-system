@@ -1,30 +1,38 @@
 const mqtt = require("mqtt");
-const { validateSensorData } = require("./utils/validator");
 const { saveSensorData } = require("./services/sensorService");
 
+let client;
+
 function startMqttClient() {
-  const client = mqtt.connect(process.env.MQTT_URL, {
+  if (client) return client;
+
+  client = mqtt.connect(process.env.MQTT_URL, {
     username: process.env.MQTT_USERNAME,
     password: process.env.MQTT_PASSWORD
   });
 
   client.on("connect", () => {
     console.log("MQTT connected");
-    client.subscribe(process.env.MQTT_TOPIC);
+    client.subscribe(process.env.MQTT_TOPIC, (err) => {
+      if (err) console.log("MQTT subscription error:", err.message);
+    });
   });
 
   client.on("message", async (topic, message) => {
     try {
       const payload = JSON.parse(message.toString());
-      if (!validateSensorData(payload)) return console.log("Invalid sensor data", payload);
-      const saved = await saveSensorData(payload);
-      console.log("Saved sensor doc:", saved.id);
+      console.log("Received MQTT message:", payload);
+
+      // Save to Firestore
+      const savedDoc = await saveSensorData(payload);
+      console.log("Saved sensor data to Firestore with ID:", savedDoc.id);
+
     } catch (error) {
       console.log("MQTT message error:", error.message);
     }
   });
 
-  client.on("error", error => console.log("MQTT error:", error.message));
+  client.on("error", (err) => console.log("MQTT error:", err.message));
   return client;
 }
 

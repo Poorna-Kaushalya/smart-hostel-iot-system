@@ -1,47 +1,50 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const { addUser, findUserByEmail } = require("../models/userStore");
-const { db, admin } = require("../firebase");
+const { db } = require("../firebase");
+const { startMqttClient } = require("../mqttClient");
 
-const SECRET = process.env.JWT_SECRET;
+const mqttClient = startMqttClient(); 
 
-// SIGNUP
-async function signup(req, res) {
-  const { name, email, password } = req.body;
-
-  if (findUserByEmail(email)) return res.status(400).json({ message: "User exists" });
-
-  const hashed = await bcrypt.hash(password, 10);
-  const user = { name, email, password: hashed };
-  addUser(user);
-
+// Signup controller
+const signup = async (req, res) => {
   try {
-    await db.collection("users").add({
-      name,
-      email,
-      password: hashed,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    const { name, email, password } = req.body;
+
+    // Save user to Firebase 
+    const userRef = await db.collection("users").add({ name, email, password });
     console.log("User saved to Firebase:", email);
+
+    // Publish signup event to MQTT safely
+    mqttClient.publish(
+      "hostel/signup",
+      JSON.stringify({ name, email, timestamp: new Date().toISOString() }),
+      { qos: 1 },
+      (err) => {
+        if (err) console.log("MQTT publish error:", err.message);
+        else console.log("Signup MQTT message sent");
+      }
+    );
+
+    res.status(200).json({ message: "Signup successful", id: userRef.id });
   } catch (error) {
-    console.error("Firebase save error:", error.message);
-    return res.status(500).json({ message: "Failed to save user in Firebase" });
+    console.error("Signup error:", error.message);
+    res.status(500).json({ message: "Signup failed" });
   }
+};
 
-  res.json({ message: "User created" });
-}
+// Login controller
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const usersSnap = await db.collection("users").where("email", "==", email).get();
 
-// LOGIN
-async function login(req, res) {
-  const { email, password } = req.body;
-  const user = findUserByEmail(email);
-  if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    if (usersSnap.empty) return res.status(401).json({ message: "Invalid credentials" });
 
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) return res.status(400).json({ message: "Invalid credentials" });
+    const user = usersSnap.docs[0].data();
+    if (user.password !== password) return res.status(401).json({ message: "Invalid credentials" });
 
-  const token = jwt.sign({ email: user.email, name: user.name }, SECRET, { expiresIn: "1d" });
-  res.json({ token, user: { name: user.name, email: user.email } });
-}
+    res.status(200).json({ message: "Login successful", email });
+  } catch (error) {
+    res.status(500).json({ message: "Login failed" });
+  }
+};
 
 module.exports = { signup, login };

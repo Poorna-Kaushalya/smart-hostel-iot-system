@@ -3,6 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import mqtt from "mqtt";
 
+import logoImg from "../assets/logo.png";
 import dashboardImg from "../assets/Smart environment monitoring dashboard setup.png";
 import contentImg from "../assets/content.png";
 import loginImg from "../assets/login.png";
@@ -22,8 +23,8 @@ function Home() {
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", loginData);
-      localStorage.setItem("token", res.data.token);
+      await axios.post("http://localhost:5000/api/auth/login", loginData);
+      alert("Login successful");
       navigate("/dashboard");
     } catch {
       alert("Login failed");
@@ -33,13 +34,6 @@ function Home() {
   const handleSignup = async () => {
     try {
       await axios.post("http://localhost:5000/api/auth/signup", signupData);
-
-      client.publish("hostel/signup", JSON.stringify({
-        name: signupData.name,
-        email: signupData.email,
-        timestamp: new Date().toISOString()
-      }), { qos: 1 });
-
       alert("Signup successful");
     } catch {
       alert("Signup failed");
@@ -48,8 +42,11 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      <nav className="flex items-center justify-between bg-blue-600 px-10 py-4 text-white">
-        <h1 className="text-xl font-bold">Smart Hostel Monitoring</h1>
+      <nav className="flex items-center justify-between bg-blue-600 px-10 py-3 text-white">
+        <div className="flex items-center space-x-3">
+          <img src={logoImg} alt="Logo" className="w-16 h-14" /> 
+          <h1 className="text-xl font-bold">Smart Hostel Monitoring</h1>
+        </div>
         <div className="space-x-3">
           <Link to="/login" className="border px-4 py-2 rounded">Login</Link>
           <Link to="/signup" className="bg-yellow-400 text-black px-4 py-2 rounded">Sign Up</Link>
@@ -60,7 +57,8 @@ function Home() {
         <div>
           <h2 className="text-4xl font-bold mb-4">Monitor and Optimize Your Hostel Environment</h2>
           <p className="text-gray-600 mb-6">
-            Visualize real-time IoT data to improve air quality, comfort, and energy efficiency.
+            Leverage real-time IoT data from connected sensors to actively monitor and optimize indoor air quality, thermal comfort,
+            and energy efficiency, enabling smarter environments that enhance well-being while reducing energy consumption.
           </p>
           <button onClick={() => navigate("/signup")} className="bg-orange-500 text-white px-6 py-3 rounded">
             Get Started
