@@ -4,8 +4,8 @@ function OccupancyPanel({ className = "", occupancyText, power, current }) {
   return (
     <DashboardPanel title="Occupancy & Lighting" className={className} buttonText="">
       <div className="flex justify-end mb-3">
-        <button className="rounded-lg bg-[#f5a623] px-3 py-1 text-xs font-semibold -mt-8 text-white hover:bg-[#e59b1f]">
-          View Dashboard
+        <button className="rounded-lg bg-[#5a83dc] px-3 py-1 text-xs font-semibold -mt-8 text-white hover:bg-[#4a74cf]">
+          View
         </button>
       </div>
 
@@ -33,17 +33,6 @@ function OccupancyPanel({ className = "", occupancyText, power, current }) {
                 }`}
               />
             ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-xl bg-white p-3 text-center">
-            <p className="text-xs text-slate-500">Power</p>
-            <p className="text-sm font-bold text-slate-800">{power ?? "--"} W</p>
-          </div>
-          <div className="rounded-xl bg-white p-3 text-center">
-            <p className="text-xs text-slate-500">Current</p>
-            <p className="text-sm font-bold text-slate-800">{current ?? "--"} A</p>
           </div>
         </div>
       </div>

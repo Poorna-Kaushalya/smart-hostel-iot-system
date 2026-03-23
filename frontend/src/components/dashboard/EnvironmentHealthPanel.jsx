@@ -20,9 +20,9 @@ function EnvironmentHealthPanel({
 }) {
   return (
     <DashboardPanel title="Hostel Environment Health" className={className} buttonText="">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.2fr_1fr]">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <div className="space-y-3">
-          <div className="flex items-center justify-between rounded-xl bg-white px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl bg-white px-4 py-2">
             <span className="text-sm text-slate-600">Temperature</span>
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold">{temperature ?? "--"}°C</span>
@@ -55,9 +55,11 @@ function EnvironmentHealthPanel({
           <div className="flex items-center justify-between rounded-xl bg-white px-4 py-3">
             <span className="text-sm text-slate-600">Power Usage</span>
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold">{power ?? "--"}W</span>
-              <span className={`text-sm font-semibold ${statusColor(powerStatus.type)}`}>
-                {powerStatus.label}
+              <span className="text-sm font-semibold">
+                {power != null ? (power / (1000*3600)).toFixed(4) : "--"} kWh
+              </span>
+              <span className={`text-sm font-semibold ${statusColor(powerStatus?.type)}`}>
+                {powerStatus?.label || "--"}
               </span>
             </div>
           </div>
@@ -67,7 +69,7 @@ function EnvironmentHealthPanel({
           <div className="flex h-44 w-44 items-center justify-center rounded-full border-[14px] border-[#f1c94f] bg-[#fff9e6] shadow-inner">
             <div className="text-center">
               <p className="text-5xl font-bold text-[#39476b]">{healthScore}</p>
-              <p className="mt-1 text-sm text-slate-500">92 / 100 good</p>
+              <p className="mt-1 text-sm text-slate-500">{healthScore} / 100 good</p>
             </div>
           </div>
         </div>

@@ -18,7 +18,7 @@ function TopSummaryCards({
   alertsCount,
 }) {
   return (
-    <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
+    <div className="mt-2 mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
       <SummaryCard
         title="Occupied Rooms"
         value={occupancyText === "Occupied" ? "1/1" : "0/1"}
@@ -60,9 +60,13 @@ function TopSummaryCards({
       />
 
       <SummaryCard
-        title="Power Consumption"
-        value={latest.power ?? "--"}
-        unit="W"
+        title="Power Usage"
+        value={
+          latest.power !== undefined
+            ? (latest.power / 1000).toFixed(2)
+            : "--"
+        }
+        unit="kWh"
         subtitle={powerStatus.label}
         icon={<Zap size={22} className="text-amber-600" />}
         bg="bg-[#f8eddc]"

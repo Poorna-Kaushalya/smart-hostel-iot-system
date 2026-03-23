@@ -23,11 +23,12 @@ function Home() {
 
   const handleLogin = async () => {
     try {
-      await axios.post("http://localhost:5000/api/auth/login", loginData);
+      const res = await axios.post("http://localhost:5000/api/auth/login", loginData);
+      localStorage.setItem("token", res.data.token); // save token
       alert("Login successful");
       navigate("/dashboard");
-    } catch {
-      alert("Login failed");
+    } catch (err) {
+      alert(err.response?.data?.message || "Login failed");
     }
   };
 
@@ -35,8 +36,8 @@ function Home() {
     try {
       await axios.post("http://localhost:5000/api/auth/signup", signupData);
       alert("Signup successful");
-    } catch {
-      alert("Signup failed");
+    } catch (err) {
+      alert(err.response?.data?.message || "Signup failed");
     }
   };
 

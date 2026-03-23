@@ -14,7 +14,7 @@ function TempHumidityPanel({
     <DashboardPanel title="Temperature & Humidity" className={className} buttonText="">
       <div className="flex justify-end mb-2">
         <button className="rounded-lg bg-[#5a83dc] px-3 py-1 -mt-8 text-xs font-semibold text-white hover:bg-[#4a74cf]">
-          View Dashboard
+          View
         </button>
       </div>
 

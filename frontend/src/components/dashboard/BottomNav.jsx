@@ -2,10 +2,10 @@ import { LayoutDashboard, Lightbulb, Thermometer, Wind, Zap, Menu } from "lucide
 
 function BottomNav() {
   return (
-    <footer className="mt-3 bg-[#4475c8] text-white">
+    <footer className="mt-3 bg-blue-900 text-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-6">
         <div className="flex flex-wrap items-center gap-2">
-          <button className="flex items-center gap-2 rounded-md bg-[#5c82da] px-4 py-2 text-sm font-medium">
+          <button className="flex items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-sm font-medium">
             <LayoutDashboard size={15} />
             Dashboard
           </button>

@@ -14,10 +14,10 @@ function SummaryCard({
       <div className="flex items-start gap-3">
         <div className={`rounded-xl p-2 ${iconBg}`}>{icon}</div>
         <div className="flex-1">
-          <p className={`text-sm font-medium ${titleColor}`}>{title}</p>
+          <p className={`text-sm ${titleColor}`}>{title}</p>
           <div className="mt-1 flex items-end gap-1">
-            <h3 className={`text-lg font-bold leading-none ${valueColor}`}>{value}</h3>
-            {unit ? <span className="pb-0 text-sm text-slate-500">{unit}</span> : null}
+            <h3 className={`text-sm font-bold leading-none ${valueColor}`}>{value}</h3>
+            {unit ? <span className="pb-0 text-xs text-slate-500">{unit}</span> : null}
 
           </div>
             {subtitle ? <p className="text-sm text-slate-600 font-extrabold">{subtitle}</p> : null}

@@ -23,7 +23,6 @@ function startMqttClient() {
       const payload = JSON.parse(message.toString());
       console.log("Received MQTT message:", payload);
 
-      // Save to Firestore
       const savedDoc = await saveSensorData(payload);
       console.log("Saved sensor data to Firestore with ID:", savedDoc.id);
 
