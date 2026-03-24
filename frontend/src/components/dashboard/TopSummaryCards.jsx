@@ -63,10 +63,10 @@ function TopSummaryCards({
         title="Power Usage"
         value={
           latest.power !== undefined
-            ? (latest.power / 1000).toFixed(2)
+            ? (latest.power /3600 ).toFixed(4)
             : "--"
         }
-        unit="kWh"
+        unit="×10⁻³ kWh"
         subtitle={powerStatus.label}
         icon={<Zap size={22} className="text-amber-600" />}
         bg="bg-[#f8eddc]"

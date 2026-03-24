@@ -161,8 +161,9 @@ function Dashboard() {
             <OccupancyPanel
               className="xl:col-span-3"
               occupancyText={occupancyText}
-              power={latest.power}
-              current={latest.current}
+              roomId={latest.roomid}
+              ldr={latest.ldr}
+              pir={latest.pir}
             />
             <TempHumidityPanel
               className="xl:col-span-3"

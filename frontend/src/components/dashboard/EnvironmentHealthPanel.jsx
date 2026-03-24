@@ -56,7 +56,7 @@ function EnvironmentHealthPanel({
             <span className="text-sm text-slate-600">Power Usage</span>
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold">
-                {power != null ? (power / (1000*3600)).toFixed(4) : "--"} kWh
+                {power != null ? (power/3600).toFixed(2) : "--"} ×10⁻³ kW
               </span>
               <span className={`text-sm font-semibold ${statusColor(powerStatus?.type)}`}>
                 {powerStatus?.label || "--"}
