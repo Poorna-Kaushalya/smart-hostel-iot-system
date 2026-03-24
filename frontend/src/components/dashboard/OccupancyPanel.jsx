@@ -7,16 +7,14 @@ function OccupancyPanel({ className = "", occupancyText }) {
   const [latestRooms, setLatestRooms] = useState([]);
 
   useEffect(() => {
-    // Listen to sensorData collection ordered by timestamp descending
     const q = query(collection(db, "sensorData"), orderBy("timestamp", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       const rooms = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-      // Keep only the latest record per room
       const latestByRoom = {};
       rooms.forEach((r) => {
         if (!latestByRoom[r.roomId]) {
-          latestByRoom[r.roomId] = r; // first occurrence is the latest due to descending order
+          latestByRoom[r.roomId] = r; 
         }
       });
 
