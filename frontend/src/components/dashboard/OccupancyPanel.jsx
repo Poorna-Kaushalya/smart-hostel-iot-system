@@ -37,7 +37,7 @@ function OccupancyPanel({ className = "", occupancyText }) {
         </button>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {/* Occupancy Card */}
         <div className="rounded-xl bg-[#f6e7da] p-4 flex items-center justify-between">
           <div>
@@ -52,17 +52,17 @@ function OccupancyPanel({ className = "", occupancyText }) {
         </div>
 
         {/* Latest Rooms Table */}
-        <div className="overflow-x-auto rounded-xl bg-white p-4">
+        <div className="overflow-x-auto rounded-xl bg-white p-2">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Room ID
                 </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   LDR
                 </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   PIR
                 </th>
               </tr>
@@ -77,9 +77,9 @@ function OccupancyPanel({ className = "", occupancyText }) {
               ) : (
                 latestRooms.map((room, idx) => (
                   <tr key={idx}>
-                    <td className="px-4 py-2 text-sm text-gray-700">{room.roomId}</td>
-                    <td className="px-4 py-2 text-sm text-gray-700">{room.ldr}</td>
-                    <td className="px-4 py-2 text-sm text-gray-700">{room.pir}</td>
+                    <td className="px-4 py-1 text-sm text-gray-700">{room.roomId}</td>
+                    <td className="px-4 py-1 text-sm text-gray-700">{room.ldr}</td>
+                    <td className="px-4 py-1 text-sm text-gray-700">{room.pir}</td>
                   </tr>
                 ))
               )}

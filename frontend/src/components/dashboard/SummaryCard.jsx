@@ -20,7 +20,6 @@ function SummaryCard({
             {unit ? <span className="pb-0 text-xs text-slate-500">{unit}</span> : null}
 
           </div>
-            {subtitle ? <p className="text-sm text-slate-600 font-extrabold">{subtitle}</p> : null}
         </div>
       </div>
     </div>

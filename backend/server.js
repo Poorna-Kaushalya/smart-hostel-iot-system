@@ -5,7 +5,13 @@ const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
 const sensorRoutes = require("./routes/sensorRoutes");
-const chatbotRoutes = require("./routes/chatbot");
+const chatbotRoutes = require("./routes/chatbotRoutes");
+const mlRoutes = require("./routes/mlRoutes");
+const dustRoutes = require("./routes/dustRoutes");
+const powerRoutes = require("./routes/powerRoutes");
+const occupancyRoutes = require("./routes/occupancyRoutes");
+const tempHumidityRoutes = require("./routes/tempHumidityRoutes");
+const airQualityRoutes = require("./routes/airQualityRoutes");
 
 const authMiddleware = require("./middleware/authMiddleware");
 const { startMqttClient } = require("./mqttClient");
@@ -29,6 +35,12 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/sensors", authMiddleware, sensorRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/ml", mlRoutes);
+app.use("/api/dust", dustRoutes);
+app.use("/api/power", powerRoutes);
+app.use("/api/occupancy", occupancyRoutes);
+app.use("/api/temp-humidity", tempHumidityRoutes);
+app.use("/api/air-quality", airQualityRoutes);
 
 async function startServer() {
   try {

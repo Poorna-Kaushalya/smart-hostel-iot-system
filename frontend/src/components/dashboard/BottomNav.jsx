@@ -1,25 +1,52 @@
-import { LayoutDashboard, Lightbulb, Thermometer, Wind, Zap, Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { LayoutDashboard, Zap, Menu } from "lucide-react";
 
 function BottomNav() {
+  const navigate = useNavigate();
+
   return (
     <footer className="mt-3 bg-blue-900 text-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-6">
         <div className="flex flex-wrap items-center gap-2">
-          <button className="flex items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-sm font-medium">
+
+          {/* Dashboard */}
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-sm font-medium"
+          >
             <LayoutDashboard size={15} />
             Dashboard
           </button>
-          <button className="rounded-md px-4 py-2 text-sm text-white/90 hover:bg-white/10">
+
+          {/* Occupancy */}
+          <button
+            onClick={() => navigate("/occupancy")}
+            className="rounded-md px-4 py-2 text-sm hover:bg-white/10"
+          >
             Occupancy & Lighting
           </button>
-          <button className="rounded-md px-4 py-2 text-sm text-white/90 hover:bg-white/10">
+
+          {/* Temp */}
+          <button
+            onClick={() => navigate("/temperature-humidity")}
+            className="rounded-md px-4 py-2 text-sm hover:bg-white/10"
+          >
             Temperature & Humidity
           </button>
-          <button className="rounded-md px-4 py-2 text-sm text-white/90 hover:bg-white/10">
-            Air Quality
+
+          <button
+            onClick={() => navigate("/dust")}
+            className="rounded-md px-4 py-2 text-sm hover:bg-white/10"
+          >
+            Dust Level
           </button>
-          <button className="rounded-md px-4 py-2 text-sm text-white/90 hover:bg-white/10">
-            Power Monitoring
+
+          {/* Power */}
+          <button
+            onClick={() => navigate("/air-quality")}
+            className="rounded-md px-4 py-2 text-sm hover:bg-white/10"
+          >
+            Air Quality
           </button>
         </div>
 
@@ -30,7 +57,7 @@ function BottomNav() {
       </div>
 
       <div className="border-t border-white/20 py-2 text-center text-sm">
-        Smart Hostal Monitoring System
+        Smart Hostel Monitoring System
       </div>
     </footer>
   );

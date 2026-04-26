@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { FaRobot, FaTimes, FaPaperPlane } from "react-icons/fa";
 
-export default function Chatbot({ latestData }) {
+export default function Chatbot({ latestData, allRoomsData }) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([
@@ -27,20 +27,33 @@ export default function Chatbot({ latestData }) {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/chatbot/ask", {
-        question: currentQuestion,
-        latestData,
+      if (!latestData) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: "Live Firebase dashboard data is still loading. Please try again.",
+          },
+        ]);
+        return;
+      }
+
+      const res = await axios.post("http://localhost:5000/api/chatbot/chat", {
+        message: currentQuestion,
+        dashboardData: latestData,
+        roomsData: allRoomsData,
+        history: messages.slice(-5)
       });
 
       setMessages((prev) => [
         ...prev,
         {
           sender: "bot",
-          text: res.data.answer || "No answer received.",
+          text: res.data.reply || "No answer received.",
         },
       ]);
     } catch (error) {
-      console.error(error);
+      console.error("Chatbot frontend error:", error);
 
       setMessages((prev) => [
         ...prev,
@@ -83,11 +96,10 @@ export default function Chatbot({ latestData }) {
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`mb-3 max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
-                  msg.sender === "user"
+                className={`mb-3 max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${msg.sender === "user"
                     ? "ml-auto bg-blue-600 text-white"
                     : "mr-auto bg-white text-slate-800 border border-slate-200"
-                }`}
+                  }`}
               >
                 {msg.text}
               </div>

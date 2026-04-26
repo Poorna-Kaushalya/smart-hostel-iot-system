@@ -160,7 +160,8 @@ function XYChart({ data = [], color = "#f0a431" }) {
 
 function AirQualityPanel({
   className = "",
-  airValue,
+  airValue,          // voltage
+  airQualityPpm,     // PPM value
   airStatus,
   airSeries = [],
 }) {
@@ -171,10 +172,13 @@ function AirQualityPanel({
         <div className="rounded-xl bg-[#dff3eb] p-3">
           <div className="flex items-center justify-between">
             <div>
+              {/* MAIN VALUE → PPM */}
               <p className="text-lg font-bold text-[#286d58]">
-                {airValue ?? "--"}
+                {airQualityPpm ?? "--"} PPM
               </p>
+
             </div>
+
             <span className="rounded-full bg-[#9fe0c4] px-3 py-1 text-xs font-semibold text-[#21634f]">
               {airStatus?.label || "--"}
             </span>

@@ -50,9 +50,9 @@ function TopSummaryCards({
       />
 
       <SummaryCard
-        title="Air Quality Index"
-        value={latest.mq135Voltage ?? "--"}
-        unit="V"
+        title="Air Quality"
+        value={latest.air_quality_ppm ?? "--"}
+        unit="PPM"
         subtitle={airStatus.label}
         icon={<Wind size={22} className="text-emerald-600" />}
         bg="bg-[#dcf3ec]"
@@ -61,12 +61,8 @@ function TopSummaryCards({
 
       <SummaryCard
         title="Power Usage"
-        value={
-          latest.power !== undefined
-            ? (latest.power /3600 ).toFixed(4)
-            : "--"
-        }
-        unit="×10⁻³ kWh"
+        value={latest.power !== undefined ? Number(latest.power).toFixed(2) : "--"}
+        unit="W"
         subtitle={powerStatus.label}
         icon={<Zap size={22} className="text-amber-600" />}
         bg="bg-[#f8eddc]"
