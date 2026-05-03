@@ -179,9 +179,6 @@ function AirQualityPanel({
 
             </div>
 
-            <span className="rounded-full bg-[#9fe0c4] px-3 py-1 text-xs font-semibold text-[#21634f]">
-              {airStatus?.label || "--"}
-            </span>
           </div>
         </div>
 

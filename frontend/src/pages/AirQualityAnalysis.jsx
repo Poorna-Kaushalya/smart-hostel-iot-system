@@ -4,7 +4,6 @@ import axios from "axios";
 import {
   ArrowLeft,
   Bell,
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -45,19 +44,29 @@ function formatTime(date) {
   });
 }
 
+function calculateAQI(value) {
+  const n = Number(value || 0);
+  return Math.round(n);
+}
+
 function aqiColor(value) {
-  if (value <= 100) return "#22c55e";
+  if (value <= 50) return "#22c55e";
+  if (value <= 100) return "#84cc16";
   if (value <= 150) return "#facc15";
   if (value <= 200) return "#fb923c";
   return "#ef4444";
 }
 
+function getAQIStatus(value) {
+  if (value <= 50) return "Good";
+  if (value <= 100) return "Moderate";
+  if (value <= 150) return "Poor";
+  return "Hazardous";
+}
+
 function heatColor(value) {
   if (!value) return "#f1f5f9";
-  if (value <= 100) return "#86efac";
-  if (value <= 150) return "#fde047";
-  if (value <= 200) return "#fb923c";
-  return "#ef4444";
+  return aqiColor(value);
 }
 
 export default function AirQualityAnalysis() {
@@ -66,8 +75,8 @@ export default function AirQualityAnalysis() {
   const [searchInput, setSearchInput] = useState("");
   const [searchRoom, setSearchRoom] = useState("");
   const [now, setNow] = useState(new Date());
-  const [calendarYear, setCalendarYear] = useState(2025);
-  const [calendarMonth, setCalendarMonth] = useState(4);
+  const [calendarYear, setCalendarYear] = useState(2026);
+  const [calendarMonth, setCalendarMonth] = useState(5);
 
   const [data, setData] = useState({
     avgAQI: 0,
@@ -93,6 +102,94 @@ export default function AirQualityAnalysis() {
       .then((res) => setData(res.data))
       .catch(console.error);
   }, [searchRoom]);
+
+  const trendData = useMemo(() => {
+    return (data.trendData || []).map((item, index) => {
+      const aqi =
+        item.aqi ??
+        item.air_quality_ppm ??
+        Number(item.mq135Voltage || 0) * 100;
+
+      return {
+        ...item,
+        time: item.time || `${index + 1}`,
+        aqi: calculateAQI(aqi),
+      };
+    });
+  }, [data.trendData]);
+
+  const roomComparison = useMemo(() => {
+    return (data.roomComparison || []).map((item) => {
+      const aqi =
+        item.aqi ??
+        item.air_quality_ppm ??
+        Number(item.mq135Voltage || 0) * 100;
+
+      return {
+        ...item,
+        room: item.room || item.roomId || "Room",
+        aqi: calculateAQI(aqi),
+      };
+    });
+  }, [data.roomComparison]);
+
+  const heatmapRows = useMemo(() => {
+    return (data.heatmapRows || []).map((row) => ({
+      ...row,
+      Morning: calculateAQI(row.Morning),
+      Afternoon: calculateAQI(row.Afternoon),
+      Evening: calculateAQI(row.Evening),
+      Night: calculateAQI(row.Night),
+    }));
+  }, [data.heatmapRows]);
+
+  const avgAQI = useMemo(() => {
+    if (Number(data.avgAQI) > 0) return calculateAQI(data.avgAQI);
+
+    if (trendData.length > 0) {
+      const total = trendData.reduce((sum, item) => sum + Number(item.aqi || 0), 0);
+      return Math.round(total / trendData.length);
+    }
+
+    return 0;
+  }, [data.avgAQI, trendData]);
+
+  const highestAQI = useMemo(() => {
+    if (Number(data.highestAQI) > 0) return calculateAQI(data.highestAQI);
+
+    if (roomComparison.length > 0) {
+      return Math.max(...roomComparison.map((item) => Number(item.aqi || 0)));
+    }
+
+    return 0;
+  }, [data.highestAQI, roomComparison]);
+
+  const highestRoom = useMemo(() => {
+    if (data.highestRoom && data.highestRoom !== "--") return data.highestRoom;
+
+    if (roomComparison.length > 0) {
+      const highest = roomComparison.reduce((max, item) =>
+        Number(item.aqi || 0) > Number(max.aqi || 0) ? item : max
+      );
+      return highest.room || "--";
+    }
+
+    return "--";
+  }, [data.highestRoom, roomComparison]);
+
+  const status = data.status && data.status !== "--" ? data.status : getAQIStatus(avgAQI);
+
+  const insights = useMemo(() => {
+    if (data.insights && data.insights.length > 0) return data.insights;
+
+    return [
+      `Average air quality is ${status}.`,
+      `Highest AQI recorded is ${highestAQI} in ${highestRoom}.`,
+      avgAQI > 100
+        ? "Ventilation improvement is recommended."
+        : "Air quality is within acceptable range.",
+    ];
+  }, [data.insights, status, highestAQI, highestRoom, avgAQI]);
 
   const daysInMonth = useMemo(() => {
     return new Date(calendarYear, calendarMonth, 0).getDate();
@@ -126,9 +223,7 @@ export default function AirQualityAnalysis() {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <header className="flex h-[60px] items-center justify-between bg-[#3f73bd] px-6 text-white">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-bold">Smart Hostel Monitoring System</h2>
-        </div>
+        <h2 className="text-lg font-bold">Smart Hostel Monitoring System</h2>
 
         <div className="flex items-center gap-5">
           <Bell size={22} />
@@ -190,7 +285,7 @@ export default function AirQualityAnalysis() {
         <strong className="text-blue-700">Last 24 Hours</strong>
       </section>
 
-      <main className="grid grid-cols-1 gap-4 px-8  lg:grid-cols-[1fr_320px]">
+      <main className="grid grid-cols-1 gap-4 px-8 lg:grid-cols-[1fr_320px]">
         <section className="grid grid-cols-1 gap-1 rounded bg-[#3f73bd] p-1 lg:grid-cols-2">
           <div className="rounded bg-white p-4">
             <h3 className="text-center font-bold text-[#2d3e69]">
@@ -198,11 +293,11 @@ export default function AirQualityAnalysis() {
             </h3>
 
             <ResponsiveContainer width="95%" height={220}>
-              <LineChart data={data.trendData}>
+              <LineChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(value) => [`${value} PPM`, "AQI"]} />
+                <Tooltip formatter={(value) => [`${value} PPM`, "Air Quality"]} />
                 <Line
                   type="monotone"
                   dataKey="aqi"
@@ -220,13 +315,13 @@ export default function AirQualityAnalysis() {
             </h3>
 
             <ResponsiveContainer width="95%" height={220}>
-              <BarChart data={data.roomComparison}>
+              <BarChart data={roomComparison}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="room" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
+                <Tooltip formatter={(value) => [`${value} PPM`, "Air Quality"]} />
                 <Bar dataKey="aqi" radius={[4, 4, 0, 0]}>
-                  {data.roomComparison.map((entry, index) => (
+                  {roomComparison.map((entry, index) => (
                     <Cell key={index} fill={aqiColor(entry.aqi)} />
                   ))}
                 </Bar>
@@ -239,13 +334,19 @@ export default function AirQualityAnalysis() {
               Current Air Quality
             </h3>
 
-            <div className="mx-auto mt-6 flex h-60 w-60 items-center justify-center rounded-full border-[25px] border-yellow-400 bg-slate-50 shadow-inner">
+            <div
+              className="mx-auto mt-6 flex h-60 w-60 items-center justify-center rounded-full border-[25px] bg-slate-50 shadow-inner"
+              style={{ borderColor: aqiColor(avgAQI) }}
+            >
               <div className="text-center">
                 <h2 className="text-4xl font-bold text-slate-700">
-                  {data.avgAQI}
+                  {avgAQI}
                 </h2>
-                <p className="mt-2 rounded-full bg-yellow-400 px-3 py-1 text-xs font-bold">
-                  {data.status}
+                <p
+                  className="mt-2 rounded-full px-3 py-1 text-xs font-bold text-white"
+                  style={{ backgroundColor: aqiColor(avgAQI) }}
+                >
+                  {status}
                 </p>
               </div>
             </div>
@@ -269,20 +370,28 @@ export default function AirQualityAnalysis() {
               </thead>
 
               <tbody>
-                {data.heatmapRows.map((row) => (
-                  <tr key={row.room}>
-                    <td className="border p-2">{row.room}</td>
-                    {periods.map((p) => (
-                      <td
-                        key={p}
-                        className="border p-2 font-semibold"
-                        style={{ background: heatColor(row[p]) }}
-                      >
-                        {row[p] || 0}
-                      </td>
-                    ))}
+                {heatmapRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="border p-4 text-slate-400">
+                      No heatmap data available
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  heatmapRows.map((row) => (
+                    <tr key={row.room}>
+                      <td className="border p-2">{row.room}</td>
+                      {periods.map((p) => (
+                        <td
+                          key={p}
+                          className="border p-2 font-semibold"
+                          style={{ background: heatColor(row[p]) }}
+                        >
+                          {row[p] ? row[p] : "-"}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
 
@@ -336,10 +445,10 @@ export default function AirQualityAnalysis() {
               <Wind className="mx-auto text-emerald-500" />
               <p className="text-sm font-bold">Avg. AQI</p>
               <h2 className="text-3xl font-bold text-emerald-600">
-                {data.avgAQI}
+                {avgAQI}
               </h2>
               <p className="rounded-full bg-emerald-200 px-2 py-1 text-sm font-bold">
-                {data.status}
+                {status}
               </p>
             </div>
 
@@ -347,10 +456,10 @@ export default function AirQualityAnalysis() {
               <TrendingDown className="mx-auto text-red-500" />
               <p className="text-sm font-bold">Highest AQI</p>
               <h2 className="text-3xl font-bold text-red-600">
-                {data.highestAQI}
+                {highestAQI}
               </h2>
               <p className="rounded-full bg-red-200 px-2 py-1 text-sm font-bold">
-                {data.highestRoom}
+                {highestRoom}
               </p>
             </div>
           </div>
@@ -362,7 +471,7 @@ export default function AirQualityAnalysis() {
             </h3>
 
             <div className="space-y-2">
-              {data.insights.map((item, index) => (
+              {insights.map((item, index) => (
                 <div
                   key={index}
                   className="flex items-center gap-2 rounded bg-white p-2 text-sm shadow-sm"

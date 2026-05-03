@@ -1,55 +1,40 @@
 #include <Arduino.h>
-#include <math.h>
+#include <Wire.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <DHT.h>
-#include "config.h"  
+#include <BH1750.h>
+#include <math.h>
+#include "config.h"
 
-// ======== PIN CONFIG ========
+// ===== PINS =====
 #define ACS_PIN 34
-#define MQ135_PIN 33
+#define MQ135_PIN 32
 #define DHT_PIN 17
 #define PIR_PIN 16
-#define LDR_PIN 35
+#define DSM_PIN 26
 
 #define DHTTYPE DHT22
-DHT dht(DHT_PIN, DHTTYPE);
 
-// ======== WIFI & MQTT ========
+DHT dht(DHT_PIN, DHTTYPE);
+BH1750 lightMeter;
+
 WiFiClientSecure secureClient;
 PubSubClient mqttClient(secureClient);
 
-// ======== CONSTANTS ========
 const float ADC_REF = 3.3;
 const int ADC_RES = 4095;
-const float SENSITIVITY = 0.066; 
-const float ADAPTER_VOLTAGE = 12.0;
-const float MIN_CURRENT_THRESHOLD = 0.1;
+const float ACS_SENSITIVITY = 0.066;
 
-// ======== VARIABLES ========
 float zeroVoltage = 0;
-float energy_kWh = 0;
-float currentAvg = 0.0;
-const float alpha = 0.3; 
+bool bh1750Ready = false;
 
-unsigned long lastEnergyTime = 0;
-unsigned long lastPublishTime = 0;
-const unsigned long publishInterval = 5000; 
-
-// ======== MQ135 WARM-UP ========
-unsigned long mq135StartTime = 0;
-const unsigned long mqWarmup = 180000; 
-
-bool mqReady() {
-  return millis() - mq135StartTime >= mqWarmup;
-}
-
-// ======== WIFI & MQTT CONNECT ========
 void connectWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
   Serial.print("Connecting WiFi");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -61,6 +46,8 @@ void connectWiFi() {
 void connectMQTT() {
   secureClient.setInsecure();
   mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+  mqttClient.setBufferSize(1024);
+
   Serial.print("Connecting MQTT");
   while (!mqttClient.connected()) {
     if (mqttClient.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD)) {
@@ -72,164 +59,142 @@ void connectMQTT() {
   }
 }
 
-// ======== SENSOR CALIBRATION ========
 void calibrateACS() {
   float sum = 0;
+
   for (int i = 0; i < 500; i++) {
-    int adc = analogRead(ACS_PIN);
-    float voltage = adc * (ADC_REF / ADC_RES);
+    float voltage = analogRead(ACS_PIN) * (ADC_REF / ADC_RES);
     sum += voltage;
     delay(2);
   }
+
   zeroVoltage = sum / 500.0;
-  Serial.print("ACS zeroVoltage: "); Serial.println(zeroVoltage, 5);
 }
 
-// ======== SENSOR READINGS ========
-float readCurrentRMS() {
+float readCurrent() {
   float sumSq = 0;
-  const int samples = 1000;
-  for (int i = 0; i < samples; i++) {
-    int adc = analogRead(ACS_PIN);
-    float voltage = adc * (ADC_REF / ADC_RES);
-    float current = (voltage - zeroVoltage) / SENSITIVITY;
+
+  for (int i = 0; i < 500; i++) {
+    float voltage = analogRead(ACS_PIN) * (ADC_REF / ADC_RES);
+    float current = (voltage - zeroVoltage) / ACS_SENSITIVITY;
     sumSq += current * current;
     delayMicroseconds(200);
   }
-  float Irms = sqrt(sumSq / samples);
 
-  if (Irms < 0.05) Irms = 0.0;
-  if (Irms > 30.0) Irms = 30.0;
+  float current = sqrt(sumSq / 500.0);
 
-  currentAvg = (currentAvg * (1 - alpha)) + (Irms * alpha);
-  return currentAvg;
+  if (current < 0.20) current = 0;
+
+  return current;
 }
 
 float readMQ135Voltage() {
   float total = 0;
-  const int samples = 10;
-  for (int i = 0; i < samples; i++) {
-    int adc = analogRead(MQ135_PIN);
-    float voltage = adc * (ADC_REF / ADC_RES);
-    total += voltage;
+
+  for (int i = 0; i < 10; i++) {
+    total += analogRead(MQ135_PIN) * (ADC_REF / ADC_RES);
     delay(5);
   }
-  float avgVoltage = total / samples;
 
-  // Filter noise
-  if (avgVoltage < 0.02 || avgVoltage > 3.0) return 0.0;
-  return avgVoltage;
+  return total / 10.0;
 }
 
-int readPIR() { return digitalRead(PIR_PIN); }
-int readLDR() { return analogRead(LDR_PIN) > 2000 ? 1 : 0; }
+float readDustDensity() {
+  unsigned long duration = pulseIn(DSM_PIN, LOW, 1000000);
 
-float readTemperature() {
-  float t = dht.readTemperature();
-  return isnan(t) ? -1 : t;
+  float ratio = duration / 10000.0;
+
+  float concentration = 1.1 * pow(ratio, 3)
+                      - 3.8 * pow(ratio, 2)
+                      + 520 * ratio
+                      + 0.62;
+
+  float dust = concentration * 0.035;
+
+  if (dust < 0) dust = 0;
+
+  return dust;
 }
 
-float readHumidity() {
-  float h = dht.readHumidity();
-  return isnan(h) ? -1 : h;
+float readLightLux() {
+  if (!bh1750Ready) return -1;
+
+  float lux = lightMeter.readLightLevel();
+
+  if (lux < 0) return -1;
+
+  return lux;
 }
 
-// ======== ENERGY CALCULATION ========
-void updateEnergy(float power, bool adapterConnected) {
-  unsigned long now = millis();
-  float hours = (now - lastEnergyTime) / 3600000.0;
-  if (adapterConnected) energy_kWh += (power * hours) / 1000.0;
-  lastEnergyTime = now;
-}
+void publishSensorValues() {
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
 
-// ======== PUBLISH DATA ========
-void publishSensorData() {
-  float current = readCurrentRMS();
-  bool adapterConnected = current >= MIN_CURRENT_THRESHOLD;
-  float power = 0;
+  if (isnan(temperature)) temperature = -1;
+  if (isnan(humidity)) humidity = -1;
 
-  if (adapterConnected) {
-    power = current * ADAPTER_VOLTAGE;
-    updateEnergy(power, true);
-  } else {
-    current = 0.0;
-    power = 0.0;
-    updateEnergy(0, false);
-  }
+  float mq135Voltage = readMQ135Voltage();
+  float dustDensity = readDustDensity();
+  float lightLux = readLightLux();
+  int pir = digitalRead(PIR_PIN);
+  float current = readCurrent();
 
-  float temp = readTemperature();
-  float hum = readHumidity();
+  StaticJsonDocument<512> doc;
 
-  // MQ135 warm-up check
-  float mqVolt = -1;
-  if (mqReady()) {
-    mqVolt = readMQ135Voltage();
-  }
-
-  int pir = readPIR();
-  int ldr = readLDR();
-
-  // Prepare JSON
-  StaticJsonDocument<256> doc;
   doc["roomId"] = ROOM_ID;
-  doc["adapterConnected"] = adapterConnected;
-  doc["current"] = current;
-  doc["power"] = power;
-  doc["energy_kWh"] = energy_kWh;
-  doc["temperature"] = temp;
-  doc["humidity"] = hum;
-  doc["mq135Voltage"] = mqVolt;
+  doc["temperature"] = temperature;
+  doc["humidity"] = humidity;
+  doc["mq135Voltage"] = mq135Voltage;
+  doc["dust_density_ug_m3"] = dustDensity;
+  doc["light_intensity_lux"] = lightLux;
   doc["pir"] = pir;
-  doc["ldr"] = ldr;
-  doc["timestamp"] = millis();
+  doc["current"] = current;
+  doc["deviceTimestamp"] = millis();
 
-  char payload[256];
-  serializeJson(doc, payload);
-  mqttClient.publish(MQTT_TOPIC, payload);
+  char payload[512];
+  size_t payloadSize = serializeJson(doc, payload);
 
-  // Serial debug
-  Serial.print("Adapter: "); Serial.print(adapterConnected);
-  Serial.print(" | Current(A): "); Serial.print(current, 3);
-  Serial.print(" | Power(W): "); Serial.print(power, 2);
-  Serial.print(" | Energy(kWh): "); Serial.print(energy_kWh, 5);
-  Serial.print(" | Temp(C): "); Serial.print(temp);
-  Serial.print(" | Humidity(%): "); Serial.print(hum);
-  Serial.print(" | MQ135(V): "); Serial.print(mqVolt);
-  Serial.print(" | PIR: "); Serial.print(pir);
-  Serial.print(" | LDR: "); Serial.println(ldr);
-  Serial.print("MQTT Payload: "); Serial.println(payload);
+  bool sent = mqttClient.publish(MQTT_TOPIC, payload, payloadSize);
+
+  Serial.print("MQTT Sent: ");
+  Serial.println(sent ? "YES" : "NO");
+  Serial.println(payload);
 }
 
-// ======== SETUP ========
 void setup() {
   Serial.begin(115200);
+  delay(2000);
+
+  pinMode(PIR_PIN, INPUT);
+  pinMode(DSM_PIN, INPUT);
 
   dht.begin();
-  pinMode(PIR_PIN, INPUT);
-  pinMode(LDR_PIN, INPUT);
 
-  delay(2000);
+  Wire.begin(21, 22);
+
+  if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, 0x23)) {
+    bh1750Ready = true;
+    Serial.println("BH1750 OK");
+  } else {
+    bh1750Ready = false;
+    Serial.println("BH1750 failed");
+  }
+
   calibrateACS();
 
   connectWiFi();
   connectMQTT();
 
-  lastEnergyTime = millis();
-  lastPublishTime = millis();
-  mq135StartTime = millis(); 
-
-  Serial.println("");
+  Serial.println("Sensor-only system started");
 }
 
-// ======== LOOP ========
 void loop() {
   if (WiFi.status() != WL_CONNECTED) connectWiFi();
   if (!mqttClient.connected()) connectMQTT();
+
   mqttClient.loop();
 
-  unsigned long now = millis();
-  if (now - lastPublishTime >= publishInterval) {
-    lastPublishTime = now;
-    publishSensorData();
-  }
+  publishSensorValues();
+
+  delay(5000);
 }

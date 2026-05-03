@@ -8,21 +8,39 @@ import {
 } from "lucide-react";
 import SummaryCard from "./SummaryCard";
 
+function safeNum(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 function TopSummaryCards({
-  latest,
+  latest = {},
   occupancyText,
-  tempStatus,
-  humidityStatus,
-  airStatus,
-  powerStatus,
-  alertsCount,
+  tempStatus = { label: "--" },
+  humidityStatus = { label: "--" },
+  airStatus = { label: "--" },
+  powerStatus = { label: "--" },
+  alertsCount = 0,
 }) {
+  const airQualityPpm =
+    latest.air_quality_ppm !== undefined && latest.air_quality_ppm !== null
+      ? safeNum(latest.air_quality_ppm)
+      : safeNum(latest.mq135Voltage) * 100;
+
+  const power =
+    latest.power !== undefined && latest.power !== null
+      ? safeNum(latest.power)
+      : safeNum(latest.current) * 12;
+
+  const displayOccupancy =
+    occupancyText || latest.occupancy || (Number(latest.pir) === 1 ? "Occupied" : "Not Occupied");
+
   return (
     <div className="mt-2 mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
       <SummaryCard
         title="Occupied Rooms"
-        value={occupancyText === "Occupied" ? "1/1" : "0/1"}
-        subtitle={occupancyText}
+        value={displayOccupancy === "Occupied" ? "1/1" : "0/1"}
+        subtitle={displayOccupancy}
         unit=""
         icon={<Building2 size={22} className="text-blue-600" />}
         bg="bg-[#eef1fb]"
@@ -51,7 +69,7 @@ function TopSummaryCards({
 
       <SummaryCard
         title="Air Quality"
-        value={latest.air_quality_ppm ?? "--"}
+        value={airQualityPpm.toFixed(1)}
         unit="PPM"
         subtitle={airStatus.label}
         icon={<Wind size={22} className="text-emerald-600" />}
@@ -61,7 +79,7 @@ function TopSummaryCards({
 
       <SummaryCard
         title="Power Usage"
-        value={latest.power !== undefined ? Number(latest.power).toFixed(2) : "--"}
+        value={power.toFixed(2)}
         unit="W"
         subtitle={powerStatus.label}
         icon={<Zap size={22} className="text-amber-600" />}

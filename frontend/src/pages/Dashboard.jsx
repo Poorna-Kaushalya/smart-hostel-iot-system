@@ -229,7 +229,7 @@ function Dashboard() {
               humidity={latest.humidity}
               mq135Voltage={latest.mq135Voltage}
               airQualityPpm={latest.air_quality_ppm}
-              power={latest.power}
+              current={latest.current}
             />
 
             <SensorRiskPanel

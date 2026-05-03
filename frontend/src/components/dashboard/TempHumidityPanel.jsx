@@ -35,16 +35,6 @@ function TempHumidityPanel({
         <Sparkline data={temperatureSeries} color="#4b7bec" />
         <Sparkline data={humiditySeries} color="#67a6ff" />
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="p-2 text-center">
-            <p className="text-xs text-slate-500">Temp Status</p>
-            <p className="text-sm font-semibold text-slate-800">{tempStatus.label}</p>
-          </div>
-          <div className="p-2 text-center">
-            <p className="text-xs text-slate-500">Humidity Status</p>
-            <p className="text-sm font-semibold text-slate-800">{humidityStatus.label}</p>
-          </div>
-        </div>
       </div>
     </DashboardPanel>
   );

@@ -23,16 +23,31 @@ import {
   YAxis,
 } from "recharts";
 
+function scaleDust(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return n < 1 ? n * 1000 : n;
+}
+
+function formatDust(value, decimals = 1) {
+  const dust = scaleDust(value);
+  return dust > 0 ? dust.toFixed(decimals) : "--";
+}
+
 function getStatus(value) {
-  if (value <= 50) return "Good";
-  if (value <= 100) return "Moderate";
+  const dust = scaleDust(value);
+
+  if (dust <= 50) return "Good";
+  if (dust <= 100) return "Moderate";
   return "Unhealthy";
 }
 
 function heatColor(value) {
-  if (value === 0) return "#f1f5f9";
-  if (value <= 50) return "#bbf7d0";
-  if (value <= 100) return "#fde68a";
+  const dust = scaleDust(value);
+
+  if (dust === 0) return "#f1f5f9";
+  if (dust <= 50) return "#bbf7d0";
+  if (dust <= 100) return "#fde68a";
   return "#fecaca";
 }
 
@@ -93,6 +108,39 @@ export default function DustLevelAnalysis() {
 
     fetchDustData();
   }, [searchRoom, selectedDate]);
+
+  const trendDataScaled = useMemo(() => {
+    return data.trendData.map((item) => ({
+      ...item,
+      dust: scaleDust(item.dust),
+    }));
+  }, [data.trendData]);
+
+  const roomDustScaled = useMemo(() => {
+    return data.roomDust.map((item) => ({
+      ...item,
+      value: scaleDust(item.value),
+    }));
+  }, [data.roomDust]);
+
+  const distributionDataScaled = useMemo(() => {
+    return data.distributionData.map((item) => ({
+      ...item,
+      value: Number(item.value) || 0,
+    }));
+  }, [data.distributionData]);
+
+  const heatRowsScaled = useMemo(() => {
+    return data.heatRows.map((row) => {
+      const newRow = { ...row };
+
+      ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach((day) => {
+        newRow[day] = scaleDust(row[day]);
+      });
+
+      return newRow;
+    });
+  }, [data.heatRows]);
 
   const daysInMonth = useMemo(() => {
     return new Date(calendarYear, calendarMonth, 0).getDate();
@@ -224,7 +272,7 @@ export default function DustLevelAnalysis() {
               <p className="text-[10px] text-slate-600">Dust Level</p>
 
               <h3 className="text-xl font-bold text-[#cf3c43]">
-                {data.latestDust ? data.latestDust.toFixed(1) : "--"} µg/m³
+                {formatDust(data.latestDust)} µg/m³
               </h3>
             </div>
           </div>
@@ -238,21 +286,12 @@ export default function DustLevelAnalysis() {
               </p>
 
               <h2 className="text-4xl font-bold text-[#a55313]">
-                {data.avgDust || "--"}{" "}
+                {formatDust(data.avgDust || data.latestDust)}{" "}
                 <span className="text-xl font-normal">µg/m³</span>
               </h2>
             </div>
           </div>
 
-          {status === "Unhealthy" ? (
-            <div className="bg-red-100 p-3 text-sm font-bold text-red-600">
-              ⚠ Unhealthy Dust Level Detected
-            </div>
-          ) : (
-            <div className="bg-emerald-100 p-3 text-sm font-bold text-emerald-700">
-              ✓ Dust Level is {status}
-            </div>
-          )}
         </section>
 
         <section className="rounded bg-white p-3">
@@ -274,7 +313,7 @@ export default function DustLevelAnalysis() {
               </div>
             ) : (
               <ResponsiveContainer width="90%" height={230}>
-                <LineChart data={data.trendData}>
+                <LineChart data={trendDataScaled}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="time" />
                   <YAxis domain={[0, 150]} />
@@ -347,7 +386,7 @@ export default function DustLevelAnalysis() {
             Dust Levels by Room
           </h3>
 
-          {data.roomDust.map((item) => (
+          {roomDustScaled.map((item) => (
             <div
               className="my-3 grid grid-cols-[80px_1fr_40px] items-center gap-2 text-sm"
               key={item.room}
@@ -372,14 +411,14 @@ export default function DustLevelAnalysis() {
           </h3>
 
           <ResponsiveContainer width="100%" height={170}>
-            <BarChart data={data.distributionData}>
+            <BarChart data={distributionDataScaled}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="level" />
               <YAxis />
               <Tooltip />
 
               <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                {data.distributionData.map((entry, index) => (
+                {distributionDataScaled.map((entry, index) => (
                   <Cell
                     key={index}
                     fill={
@@ -414,8 +453,8 @@ export default function DustLevelAnalysis() {
             </thead>
 
             <tbody>
-              {data.heatRows.length > 0 ? (
-                data.heatRows.map((row) => (
+              {heatRowsScaled.length > 0 ? (
+                heatRowsScaled.map((row) => (
                   <tr key={row.room}>
                     <td className="border p-1 font-semibold">{row.room}</td>
 
@@ -425,7 +464,7 @@ export default function DustLevelAnalysis() {
                         className="border p-1"
                         style={{ background: heatColor(row[day]) }}
                       >
-                        {row[day] || 0}
+                        {row[day] ? row[day].toFixed(1) : 0}
                       </td>
                     ))}
                   </tr>
