@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import DashboardPanel from "./DashboardPanel";
 
 function XYChart({ data = [], color = "#f0a431" }) {
@@ -23,13 +24,10 @@ function XYChart({ data = [], color = "#f0a431" }) {
   const plotWidth = width - paddingLeft - paddingRight;
   const plotHeight = height - paddingTop - paddingBottom;
 
-  // Line points
   const points = data
     .map((d, i) => {
-      const x =
-        paddingLeft + (i / Math.max(data.length - 1, 1)) * plotWidth;
-      const y =
-        paddingTop + plotHeight - ((d - minY) / rangeY) * plotHeight;
+      const x = paddingLeft + (i / Math.max(data.length - 1, 1)) * plotWidth;
+      const y = paddingTop + plotHeight - ((d - minY) / rangeY) * plotHeight;
       return `${x},${y}`;
     })
     .join(" ");
@@ -58,15 +56,13 @@ function XYChart({ data = [], color = "#f0a431" }) {
       </p>
 
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full">
-        {/* Gradient */}
         <defs>
-          <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id="airAreaGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={color} stopOpacity="0.4" />
             <stop offset="100%" stopColor={color} stopOpacity="0.05" />
           </linearGradient>
         </defs>
 
-        {/* Axes */}
         <line
           x1={paddingLeft}
           y1={paddingTop}
@@ -82,7 +78,6 @@ function XYChart({ data = [], color = "#f0a431" }) {
           stroke="#cbd5e1"
         />
 
-        {/* Grid + Y labels */}
         {yTicks.map((tick, index) => {
           const y =
             paddingTop + plotHeight - ((tick - minY) / rangeY) * plotHeight;
@@ -110,10 +105,8 @@ function XYChart({ data = [], color = "#f0a431" }) {
           );
         })}
 
-        {/* Area */}
-        <path d={areaPath} fill="url(#areaGradient)" />
+        <path d={areaPath} fill="url(#airAreaGradient)" />
 
-        {/* Line */}
         <polyline
           fill="none"
           stroke={color}
@@ -124,34 +117,10 @@ function XYChart({ data = [], color = "#f0a431" }) {
         />
 
         {data.map((d, i) => {
-          const x =
-            paddingLeft + (i / Math.max(data.length - 1, 1)) * plotWidth;
-          const y =
-            paddingTop + plotHeight - ((d - minY) / rangeY) * plotHeight;
+          const x = paddingLeft + (i / Math.max(data.length - 1, 1)) * plotWidth;
+          const y = paddingTop + plotHeight - ((d - minY) / rangeY) * plotHeight;
 
           return <circle key={i} cx={x} cy={y} r="2.5" fill={color} />;
-        })}
-
-        {data.map((_, i) => {
-          if (i % Math.ceil(data.length / 5) !== 0 && i !== data.length - 1) {
-            return null;
-          }
-
-          const x =
-            paddingLeft + (i / Math.max(data.length - 1, 1)) * plotWidth;
-
-          return (
-            <text
-              key={i}
-              x={x}
-              y={height - 8}
-              textAnchor="middle"
-              fontSize="10"
-              fill="#64748b"
-            >
-              {i + 1}
-            </text>
-          );
         })}
       </svg>
     </div>
@@ -160,29 +129,31 @@ function XYChart({ data = [], color = "#f0a431" }) {
 
 function AirQualityPanel({
   className = "",
-  airValue,          // voltage
-  airQualityPpm,     // PPM value
-  airStatus,
+  airQualityPpm,
   airSeries = [],
 }) {
+  const navigate = useNavigate();
+
   return (
-    <DashboardPanel title="Air Quality" className={className}>
+    <DashboardPanel title="Air Quality" className={className} buttonText="">
+      <div className="mb-3 flex justify-end">
+        <button
+          onClick={() => navigate("/air-quality")}
+          className="-mt-8 rounded-lg bg-[#5a83dc] px-3 py-1 text-xs font-semibold text-white hover:bg-[#4a74cf]"
+        >
+          View
+        </button>
+      </div>
+
       <div className="space-y-3">
-        {/* Value Card */}
         <div className="rounded-xl bg-[#dff3eb] p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              {/* MAIN VALUE → PPM */}
-              <p className="text-lg font-bold text-[#286d58]">
-                {airQualityPpm ?? "--"} PPM
-              </p>
-
-            </div>
-
-          </div>
+          <p className="text-lg font-bold text-[#286d58]">
+            {airQualityPpm !== null && airQualityPpm !== undefined
+              ? `${Number(airQualityPpm).toFixed(1)} PPM`
+              : "-- PPM"}
+          </p>
         </div>
 
-        {/* Area Chart */}
         <XYChart data={airSeries} />
       </div>
     </DashboardPanel>

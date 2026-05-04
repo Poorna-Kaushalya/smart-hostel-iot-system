@@ -21,6 +21,7 @@ import SensorRiskPanel from "../components/dashboard/SensorRiskPanel";
 import AlertsPanel from "../components/dashboard/AlertsPanel";
 import BottomNav from "../components/dashboard/BottomNav";
 import Chatbot from "../components/dashboard/Chatbot";
+import AdvancedAnalysisPanel from "../components/dashboard/AdvancedAnalysisPanel";
 
 import {
   getTempStatus,
@@ -82,6 +83,20 @@ function Dashboard() {
 
   const latest = filteredRecords[0] || {};
 
+  const airPpm =
+    latest.air_quality_ppm !== undefined &&
+    latest.air_quality_ppm !== null &&
+    latest.air_quality_ppm !== ""
+      ? Number(latest.air_quality_ppm)
+      : Number(latest.mq135Voltage || 0) * 100;
+
+  const powerW =
+    latest.power !== undefined &&
+    latest.power !== null &&
+    latest.power !== ""
+      ? Number(latest.power)
+      : Number(latest.current || 0) * 12;
+
   useEffect(() => {
     const getMLHealth = async () => {
       if (!latest.temperature) {
@@ -95,9 +110,10 @@ function Dashboard() {
           {
             temperature: Number(latest.temperature),
             humidity: Number(latest.humidity),
-            air_quality_ppm: Number(latest.air_quality_ppm),
+            air_quality_ppm: airPpm,
             dust_density_ug_m3: Number(latest.dust_density_ug_m3),
             light_intensity_lux: Number(latest.light_intensity_lux),
+            power: powerW,
             hour: Number(latest.hour) || new Date().getHours(),
           }
         );
@@ -110,7 +126,7 @@ function Dashboard() {
     };
 
     getMLHealth();
-  }, [latest]);
+  }, [latest, airPpm, powerW]);
 
   const temperatureSeries = useMemo(
     () => [...filteredRecords].reverse().map((r) => Number(r.temperature) || 0),
@@ -126,17 +142,11 @@ function Dashboard() {
     () =>
       [...filteredRecords]
         .reverse()
-        .map((r) => Number(r.air_quality_ppm) || 0),
-    [filteredRecords]
-  );
-
-  const powerSeries = useMemo(
-    () => [...filteredRecords].reverse().map((r) => Number(r.power) || 0),
-    [filteredRecords]
-  );
-
-  const currentSeries = useMemo(
-    () => [...filteredRecords].reverse().map((r) => Number(r.current) || 0),
+        .map((r) =>
+          r.air_quality_ppm !== undefined && r.air_quality_ppm !== null
+            ? Number(r.air_quality_ppm)
+            : Number(r.mq135Voltage || 0) * 100
+        ),
     [filteredRecords]
   );
 
@@ -149,14 +159,22 @@ function Dashboard() {
 
   const tempStatus = getTempStatus(Number(latest.temperature));
   const humidityStatus = getHumidityStatus(Number(latest.humidity));
-  const airStatus = getAirStatus(Number(latest.air_quality_ppm));
-  const powerStatus = getPowerStatus(Number(latest.power));
+  const airStatus = getAirStatus(airPpm);
+  const powerStatus = getPowerStatus(powerW);
 
-  const alerts = buildAlerts(latest);
+  const alerts = buildAlerts({
+    ...latest,
+    air_quality_ppm: airPpm,
+    power: powerW,
+  });
 
   const navItems = [
     { icon: <FaHome />, label: "Dashboard", path: "/" },
-    { icon: <FaThermometerHalf />, label: "Temperature", path: "/temperature-humidity" },
+    {
+      icon: <FaThermometerHalf />,
+      label: "Temperature",
+      path: "/temperature-humidity",
+    },
     { icon: <FaWind />, label: "Air Quality", path: "/air-quality" },
     { icon: <FaSmog />, label: "Dust Level", path: "/dust" },
     { icon: <FaBolt />, label: "Occupancy", path: "/occupancy" },
@@ -211,7 +229,7 @@ function Dashboard() {
 
         <main className="mx-auto max-w-8xl px-4 py-2 lg:px-8">
           <TopSummaryCards
-            latest={latest}
+            latest={{ ...latest, air_quality_ppm: airPpm, power: powerW }}
             occupancyText={occupancyText}
             tempStatus={tempStatus}
             humidityStatus={humidityStatus}
@@ -228,8 +246,9 @@ function Dashboard() {
               temperature={latest.temperature}
               humidity={latest.humidity}
               mq135Voltage={latest.mq135Voltage}
-              airQualityPpm={latest.air_quality_ppm}
+              airQualityPpm={airPpm}
               current={latest.current}
+              power={powerW}
             />
 
             <SensorRiskPanel
@@ -265,7 +284,7 @@ function Dashboard() {
             <AirQualityPanel
               className="xl:col-span-3"
               airValue={latest.mq135Voltage}
-              airQualityPpm={latest.air_quality_ppm}
+              airQualityPpm={airPpm}
               airStatus={airStatus}
               airSeries={airSeries}
             />
@@ -275,6 +294,10 @@ function Dashboard() {
               dust={latest.dust_density_ug_m3}
               records={filteredRecords}
             />
+          </div>
+
+          <div className="mb-5">
+            <AdvancedAnalysisPanel records={filteredRecords} />
           </div>
         </main>
 

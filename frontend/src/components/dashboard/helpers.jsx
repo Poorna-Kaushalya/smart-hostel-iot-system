@@ -13,14 +13,15 @@ export function getMLStatus(score) {
 }
 
 // ================= TEMPERATURE =================
+// Based on indoor thermal comfort ranges adapted from ASHRAE Standard 55
 export function getTempStatus(value) {
   if (Number.isNaN(value)) return { label: "No Data", type: "warn" };
 
-  if (value >= 22 && value <= 30) {
+  if (value >= 22 && value <= 26) {
     return { label: "Normal", type: "good" };
   }
 
-  if ((value > 30 && value <= 34) || (value >= 18 && value < 22)) {
+  if ((value > 26 && value <= 30) || (value >= 18 && value < 22)) {
     return { label: "Moderate", type: "warn" };
   }
 
@@ -28,14 +29,16 @@ export function getTempStatus(value) {
 }
 
 // ================= HUMIDITY =================
+// EPA recommends indoor humidity around 30%–50%.
+// Values above 60% increase mold risk.
 export function getHumidityStatus(value) {
   if (Number.isNaN(value)) return { label: "No Data", type: "warn" };
 
-  if (value >= 40 && value <= 70) {
+  if (value >= 30 && value <= 50) {
     return { label: "Normal", type: "good" };
   }
 
-  if ((value > 70 && value <= 80) || (value >= 30 && value < 40)) {
+  if ((value > 50 && value <= 60) || (value >= 25 && value < 30)) {
     return { label: "Moderate", type: "warn" };
   }
 
@@ -43,18 +46,31 @@ export function getHumidityStatus(value) {
 }
 
 // ================= AIR QUALITY =================
-// Use PPM instead of MQ135 voltage
+// MQ135 PPM is approximate. These are practical IAQ dashboard thresholds.
+// If your value represents CO2-equivalent ppm, 1000 ppm is commonly used as a warning level.
 export function getAirStatus(ppm) {
   if (Number.isNaN(ppm)) return { label: "No Data", type: "warn" };
 
-  if (ppm <= 150) return { label: "Good", type: "good" };
-  if (ppm <= 300) return { label: "Moderate", type: "warn" };
+  if (ppm <= 800) return { label: "Good", type: "good" };
+  if (ppm <= 1000) return { label: "Moderate", type: "warn" };
 
   return { label: "Poor", type: "danger" };
 }
 
+// ================= DUST / PM =================
+// Based on WHO air-quality guidance, adapted for simple dashboard categories.
+export function getDustStatus(dustUgM3) {
+  if (Number.isNaN(dustUgM3)) return { label: "No Data", type: "warn" };
+
+  if (dustUgM3 <= 15) return { label: "Good", type: "good" };
+  if (dustUgM3 <= 50) return { label: "Moderate", type: "warn" };
+
+  return { label: "Unhealthy", type: "danger" };
+}
+
 // ================= POWER =================
-// Power is displayed in Watts
+// Project-specific threshold.
+// No universal standard for hostel room power usage.
 export function getPowerStatus(powerW) {
   if (Number.isNaN(powerW)) return { label: "No Data", type: "warn" };
 
@@ -64,30 +80,34 @@ export function getPowerStatus(powerW) {
   return { label: "High", type: "danger" };
 }
 
-// ================= OPTIONAL RULE-BASED SCORE =================
-// ML score is used in dashboard. This is kept only as fallback.
+// ================= HEALTH SCORE =================
 export function calculateHealthScore({
   temperature,
   humidity,
   air_quality_ppm,
+  dust_density_ug_m3,
   power,
 }) {
   let score = 100;
 
-  if (Number.isNaN(temperature) || temperature < 22 || temperature > 30) {
+  if (Number.isNaN(temperature) || temperature < 22 || temperature > 26) {
     score -= 20;
   }
 
-  if (Number.isNaN(humidity) || humidity < 40 || humidity > 70) {
+  if (Number.isNaN(humidity) || humidity < 30 || humidity > 50) {
     score -= 20;
   }
 
-  if (Number.isNaN(air_quality_ppm) || air_quality_ppm > 300) {
-    score -= 30;
+  if (Number.isNaN(air_quality_ppm) || air_quality_ppm > 1000) {
+    score -= 25;
+  }
+
+  if (Number.isNaN(dust_density_ug_m3) || dust_density_ug_m3 > 50) {
+    score -= 25;
   }
 
   if (Number.isNaN(power) || power > 250) {
-    score -= 15;
+    score -= 10;
   }
 
   return Math.max(0, score);
@@ -97,30 +117,44 @@ export function calculateHealthScore({
 export function buildAlerts(latest) {
   const alerts = [];
 
-  if (Number(latest.temperature) > 34) {
+  const powerW =
+    latest.power !== undefined && latest.power !== null
+      ? Number(latest.power)
+      : Number(latest.current || 0) * 12;
+
+  if (Number(latest.temperature) > 30) {
     alerts.push({
       title: "High Temperature",
       desc: `Temperature is ${latest.temperature}°C`,
     });
   }
 
-  if (Number(latest.humidity) > 80) {
+  if (Number(latest.humidity) > 60) {
     alerts.push({
       title: "High Humidity",
       desc: `Humidity is ${latest.humidity}%`,
     });
   }
 
-  if (Number(latest.air_quality_ppm) > 300) {
+  if (Number(latest.air_quality_ppm) > 1000) {
     alerts.push({
       title: "Poor Air Quality",
       desc: `Air Quality is ${latest.air_quality_ppm} PPM`,
     });
   }
 
+  if (Number(latest.dust_density_ug_m3) > 50) {
+    alerts.push({
+      title: "High Dust Level",
+      desc: `Dust level is ${latest.dust_density_ug_m3} µg/m³`,
+    });
+  }
+
   if (
-    (latest.pir === 0 || latest.pir === false || latest.occupancy === "Not Occupied") &&
-    Number(latest.power) > 120
+    (latest.pir === 0 ||
+      latest.pir === false ||
+      latest.occupancy === "Not Occupied") &&
+    powerW > 120
   ) {
     alerts.push({
       title: "Energy Waste",

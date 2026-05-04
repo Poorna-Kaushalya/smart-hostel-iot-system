@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardPanel from "./DashboardPanel";
 import {
   BarChart,
@@ -31,11 +32,10 @@ function getRecordDate(record) {
 }
 
 function DustLevelPanel({ className = "", dust = 0, records = [] }) {
+  const navigate = useNavigate();
+
   const dustValue = Number(dust || 0);
-
-  // For chart visibility only
   const displayDustValue = dustValue * 1000;
-
   const dustStatus = getDustStatus(displayDustValue);
 
   const dailyDust = useMemo(() => {
@@ -50,8 +50,7 @@ function DustLevelPanel({ className = "", dust = 0, records = [] }) {
       const rawValue = Number(record.dust_density_ug_m3 || 0);
       if (rawValue <= 0) return;
 
-      // Scale small sensor values for visible chart
-      const value = rawValue * 1000;
+      const value = rawValue < 1 ? rawValue * 1000 : rawValue;
 
       const date = getRecordDate(record);
       const dayName = days[date.getDay()];
@@ -71,8 +70,11 @@ function DustLevelPanel({ className = "", dust = 0, records = [] }) {
 
   return (
     <DashboardPanel title="Dust Levels" className={className} buttonText="">
-      <div className="flex justify-end mb-3">
-        <button className="rounded-lg bg-[#5a83dc] px-3 py-1 text-xs font-semibold -mt-8 text-white hover:bg-[#4a74cf]">
+      <div className="mb-3 flex justify-end">
+        <button
+          onClick={() => navigate("/dust")}
+          className="-mt-8 rounded-lg bg-[#5a83dc] px-3 py-1 text-xs font-semibold text-white hover:bg-[#4a74cf]"
+        >
           View
         </button>
       </div>
@@ -81,10 +83,7 @@ function DustLevelPanel({ className = "", dust = 0, records = [] }) {
         <div className="rounded-xl bg-[#f9eddd] p-4">
           <div className="flex items-center justify-between">
             <p className="text-xl font-bold text-[#8d5e1e]">
-              {displayDustValue
-                ? displayDustValue.toFixed(2)
-                : "--"}{" "}
-              µg/m³
+              {displayDustValue ? displayDustValue.toFixed(2) : "--"} µg/m³
             </p>
 
           </div>
@@ -99,9 +98,7 @@ function DustLevelPanel({ className = "", dust = 0, records = [] }) {
             <BarChart data={dailyDust}>
               <XAxis dataKey="day" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 12 }} domain={[0, "auto"]} />
-              <Tooltip
-                formatter={(value) => [`${value} µg/m³`, "Dust"]}
-              />
+              <Tooltip formatter={(value) => [`${value} µg/m³`, "Dust"]} />
               <Bar dataKey="dust" fill="#64748b" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

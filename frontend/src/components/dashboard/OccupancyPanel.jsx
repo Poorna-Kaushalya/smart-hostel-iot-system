@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardPanel from "./DashboardPanel";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 
 function OccupancyPanel({ className = "", occupancyText }) {
+  const navigate = useNavigate();
   const [latestRooms, setLatestRooms] = useState([]);
 
   useEffect(() => {
@@ -14,8 +16,9 @@ function OccupancyPanel({ className = "", occupancyText }) {
 
       const latestByRoom = {};
       rooms.forEach((r) => {
-        if (!latestByRoom[r.roomId]) {
-          latestByRoom[r.roomId] = r;
+        const roomKey = r.roomId || r.roomid;
+        if (roomKey && !latestByRoom[roomKey]) {
+          latestByRoom[roomKey] = r;
         }
       });
 
@@ -37,20 +40,25 @@ function OccupancyPanel({ className = "", occupancyText }) {
 
   return (
     <DashboardPanel title="Occupancy & Lighting" className={className} buttonText="">
-      <div className="flex justify-end mb-3">
-        <button className="rounded-lg bg-[#5a83dc] px-3 py-1 text-xs font-semibold -mt-8 text-white hover:bg-[#4a74cf]">
+      <div className="mb-3 flex justify-end">
+        <button
+          onClick={() => navigate("/occupancy")}
+          className="-mt-8 rounded-lg bg-[#5a83dc] px-3 py-1 text-xs font-semibold text-white hover:bg-[#4a74cf]"
+        >
           View
         </button>
       </div>
 
       <div className="space-y-4">
-        <div className="rounded-xl bg-[#f6e7da] p-4 flex items-center justify-between">
+        <div className="flex items-center justify-between rounded-xl bg-[#f6e7da] p-4">
           <div>
             <p className="text-xl font-bold text-[#b97b2e]">{occupiedCount}</p>
             <p className="text-sm text-slate-600">Rooms Occupied</p>
           </div>
 
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${occupancyBadgeColor}`}>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${occupancyBadgeColor}`}
+          >
             {displayOccupancy}
           </span>
         </div>
@@ -59,22 +67,25 @@ function OccupancyPanel({ className = "", occupancyText }) {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-1 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Room
                 </th>
-                <th className="px-4 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-1 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Light
                 </th>
-                <th className="px-4 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-1 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   PIR
                 </th>
               </tr>
             </thead>
 
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 bg-white">
               {latestRooms.length === 0 ? (
                 <tr>
-                  <td colSpan="3" className="px-4 py-2 text-center text-sm text-gray-400">
+                  <td
+                    colSpan="3"
+                    className="px-4 py-2 text-center text-sm text-gray-400"
+                  >
                     No data available
                   </td>
                 </tr>
@@ -82,7 +93,7 @@ function OccupancyPanel({ className = "", occupancyText }) {
                 latestRooms.map((room) => (
                   <tr key={room.id}>
                     <td className="px-4 py-1 text-sm text-gray-700">
-                      {room.roomId}
+                      {room.roomId || room.roomid || "--"}
                     </td>
                     <td className="px-4 py-1 text-sm text-gray-700">
                       {Number(room.light_intensity_lux || 0).toFixed(1)} lux
